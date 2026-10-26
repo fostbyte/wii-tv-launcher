@@ -580,6 +580,45 @@ body.hdmi-mode .cursor { opacity: 0; pointer-events: none; }
 @keyframes starSpin { to { transform: rotate(360deg); } }
 .b-paramount .wm { font-size: 40px; font-weight: 800; color: #fff; letter-spacing: -1px; }
 
+/* PBS KIDS */
+.b-pbskids {
+  background: linear-gradient(160deg, #78c043 0%, #009a44 100%);
+  flex-direction: column;
+}
+.b-pbskids .pbs-circle {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; z-index: 2; margin-bottom: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  animation: pbsBounce 2.4s ease-in-out infinite;
+}
+.b-pbskids .pbs-face {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #231f20;
+  position: relative;
+}
+.b-pbskids .pbs-face::before {
+  content: ''; position: absolute; left: 10px; top: 12px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #fff;
+}
+.b-pbskids .pbs-face::after {
+  content: ''; position: absolute; left: 14px; bottom: 10px;
+  width: 22px; height: 10px;
+  border-bottom: 4px solid #fff;
+  border-radius: 0 0 16px 16px;
+}
+.b-pbskids .wm {
+  font-size: 38px; font-weight: 900; color: #fff;
+  letter-spacing: 0px; text-shadow: 0 3px 10px rgba(0,0,0,.25);
+  font-family: 'WiiRound', sans-serif, system-ui;
+}
+@keyframes pbsBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08) rotate(3deg); }
+}
+
 /* HDMI input */
 .b-hdmi { background: linear-gradient(180deg, #fbfcfd, #e6e9ec); flex-direction: column; }
 .b-hdmi .port {

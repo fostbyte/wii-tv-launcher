@@ -35,6 +35,9 @@ var Banners = (function () {
     paramount: function () {
       return '<div class="banner b-paramount"><span class="stars">' + stars(14) + '</span><span class="mountain"></span><span class="wm">Paramount+</span></div>';
     },
+    pbskids: function () {
+      return '<div class="banner b-pbskids"><span class="pbs-circle"><span class="pbs-face"></span></span><span class="wm">PBS KIDS</span></div>';
+    },
     hdmi: function (ch) {
       return '<div class="banner b-hdmi"><span class="scan"></span><span class="signal' + (ch.connected ? '' : ' off') + '"></span>' +
              '<span class="port"></span><span class="wm">HDMI ' + ch.number + '</span>' +

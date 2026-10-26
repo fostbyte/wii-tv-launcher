@@ -26,6 +26,7 @@ var WII_CONFIG = {
     { key: 'hulu',      name: 'Hulu',        type: 'app', restId: '3201601007625', match: /^hulu/i },
     { key: 'peacock',   name: 'Peacock',     type: 'app', restId: '3202006020991', match: /peacock/i },
     { key: 'paramount', name: 'Paramount+',  type: 'app', restId: '3201710014981', match: /paramount/i },
+    { key: 'pbskids',   name: 'PBS KIDS',    type: 'app', restId: '3201809016952', match: /pbs.*kids|kids.*pbs/i },
     // HDMI channels are inserted here at runtime (one per detected port)
     { key: 'hdmi',      type: 'hdmi-placeholder' },
     { key: 'settings',  name: 'TV Settings', type: 'settings' }

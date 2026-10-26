@@ -195,8 +195,11 @@
       toast('Starting ' + ch.name + '…');
       state = 'launching';
       TV.launchApp(ch, function () {
-        // when we come back from the app, return to the menu
-        if (!TV.isTizen) setTimeout(function () { closePreview(true); }, 900);
+        // App launched! Reset preview back to channel grid so that when the user
+        // eventually exits the native app, the Wii Menu is ready on the grid.
+        setTimeout(function () {
+          closePreview(true);
+        }, 1200);
       }, function (err) {
         state = 'preview';
         WiiSound.error();

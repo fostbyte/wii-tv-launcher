@@ -1,7 +1,7 @@
 {
   "name": "wii-tv-launcher",
   "appName": "Wii Menu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Wii Menu Launcher for Samsung Tizen TVs",
   "packageType": "app",
   "appPath": "index.html",
