@@ -1,0 +1,608 @@
+/* =========================================================
+   Wii Menu – Samsung Tizen launcher
+   Target: Tizen 6 (Chromium ~76). Avoid flex `gap`, `inset`,
+   `aspect-ratio`, `:has()`, etc. Grid gap is fine.
+   ========================================================= */
+
+@font-face {
+  font-family: 'WiiRound';
+  src: url('../fonts/nunito.woff2') format('woff2');
+  font-weight: 200 1000;
+  font-style: normal;
+}
+
+:root {
+  --wii-blue: #34beed;
+  --wii-blue-deep: #1a9fd6;
+  --wii-blue-glow: rgba(52, 190, 237, 0.55);
+  --bg-top: #ffffff;
+  --bg-bottom: #e9ebee;
+  --grey-900: #4a4f55;
+  --grey-700: #7d838a;
+  --grey-500: #a7adb3;
+  --grey-300: #cfd3d7;
+  --grey-200: #e2e5e8;
+  --grey-100: #f2f3f5;
+  --tile-radius: 26px;
+  --ease-wii: cubic-bezier(.2, .9, .25, 1.15);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0d0f12;
+  font-family: 'WiiRound', 'Nunito', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+[hidden] { display: none !important; }
+
+/* ---------- Stage (always 1920x1080) ---------- */
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  margin-left: -960px;
+  margin-top: -540px;
+  overflow: hidden;
+  transform-origin: 50% 50%;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+}
+
+/* Transparent so HDMI (tv window) can show through */
+body.hdmi-mode, body.hdmi-mode .stage { background: transparent !important; }
+body.hdmi-mode .menu,
+body.hdmi-mode .cursor { opacity: 0; pointer-events: none; }
+
+/* =========================================================
+   Boot screen
+   ========================================================= */
+.boot {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff;
+  transition: opacity .6s ease;
+}
+.boot.out { opacity: 0; pointer-events: none; }
+.boot-inner { text-align: center; color: var(--grey-900); animation: bootIn 1s var(--ease-out) both; }
+.boot-title {
+  font-size: 64px; font-weight: 800; letter-spacing: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.boot-warn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 78px; height: 78px; margin-right: 26px;
+  border-radius: 50%; background: #ffcc00; color: #222; font-size: 52px;
+  box-shadow: 0 0 0 6px #fff, 0 0 0 9px #ffcc00;
+}
+.boot-text { font-size: 38px; line-height: 1.55; color: var(--grey-700); margin: 46px 0 70px; font-weight: 600; }
+.boot-press { font-size: 40px; font-weight: 700; color: var(--grey-700); animation: blink 1.6s ease-in-out infinite; }
+.key-pill {
+  display: inline-block; padding: 2px 22px; margin: 0 6px;
+  border-radius: 999px; border: 3px solid var(--grey-500);
+  font-weight: 800; color: var(--grey-900); background: #fff;
+}
+
+@keyframes bootIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* =========================================================
+   Menu + channel grid
+   ========================================================= */
+.menu {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  transition: transform .55s var(--ease-out), opacity .4s ease;
+}
+.menu.zoomed { transform: scale(1.12); opacity: 0; }
+
+.pages {
+  position: absolute;
+  left: 0; top: 0;
+  height: 800px;
+  display: flex;
+  transition: transform .6s var(--ease-out);
+}
+
+.page {
+  width: 1920px;
+  height: 800px;
+  padding: 58px 150px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 214px);
+  grid-gap: 34px 38px;
+}
+
+/* ----- Channel tile ----- */
+.channel {
+  position: relative;
+  border-radius: var(--tile-radius);
+  background: #fff;
+  box-shadow:
+    inset 0 0 0 5px #d3d7db,
+    inset 0 0 0 7px #fff,
+    0 3px 6px rgba(0,0,0,.07);
+  transition: transform .28s var(--ease-wii), box-shadow .25s ease;
+  will-change: transform;
+}
+.channel .screen {
+  position: absolute; left: 9px; top: 9px; right: 9px; bottom: 9px;
+  border-radius: calc(var(--tile-radius) - 9px);
+  overflow: hidden;
+  background: #fff;
+}
+/* glossy top highlight like the Wii's plastic */
+.channel .screen::after {
+  content: '';
+  position: absolute; left: 0; top: 0; right: 0; height: 46%;
+  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));
+  pointer-events: none;
+}
+/* shine sweep */
+.channel .shine {
+  position: absolute; top: -20%; bottom: -20%; left: -60%; width: 38%;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.75) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-18deg) translateX(0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.channel.focused .shine { animation: shine 2.6s ease-in-out infinite; }
+@keyframes shine {
+  0%   { left: -60%; opacity: 0; }
+  10%  { opacity: 1; }
+  45%  { left: 130%; opacity: 1; }
+  46%, 100% { left: 130%; opacity: 0; }
+}
+
+.channel.focused {
+  transform: scale(1.055);
+  box-shadow:
+    inset 0 0 0 5px var(--wii-blue),
+    inset 0 0 0 7px #fff,
+    0 0 0 4px rgba(52,190,237,.35),
+    0 0 34px 8px var(--wii-blue-glow),
+    0 10px 24px rgba(0,0,0,.12);
+  animation: focusPulse 1.4s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes focusPulse {
+  0%, 100% { box-shadow: inset 0 0 0 5px var(--wii-blue), inset 0 0 0 7px #fff, 0 0 0 4px rgba(52,190,237,.35), 0 0 34px 8px var(--wii-blue-glow), 0 10px 24px rgba(0,0,0,.12); }
+  50%      { box-shadow: inset 0 0 0 5px #6fd6f7, inset 0 0 0 7px #fff, 0 0 0 7px rgba(52,190,237,.22), 0 0 46px 14px rgba(52,190,237,.35), 0 10px 24px rgba(0,0,0,.12); }
+}
+
+/* Channel label that pops above the focused tile (like Wii hover text) */
+.channel .label {
+  position: absolute; left: 50%; bottom: -26px;
+  transform: translate(-50%, 6px);
+  padding: 6px 22px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--grey-900);
+  font-weight: 800; font-size: 24px; white-space: nowrap;
+  box-shadow: 0 0 0 3px var(--wii-blue), 0 6px 14px rgba(0,0,0,.15);
+  opacity: 0;
+  transition: opacity .2s ease, transform .25s var(--ease-wii);
+  z-index: 6;
+  pointer-events: none;
+}
+.channel.focused .label { opacity: 1; transform: translate(-50%, 0); }
+
+/* Empty channel slot */
+.channel.empty .screen {
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.035) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #f1f2f4, #e3e6e9);
+}
+.channel.empty { box-shadow: inset 0 0 0 5px #dde0e3, inset 0 0 0 7px #fff; }
+
+/* Tile entrance */
+.page .channel { animation: tileIn .55s var(--ease-wii) both; }
+@keyframes tileIn { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+
+/* ----- Page arrows ----- */
+.page-arrow {
+  position: absolute; top: 330px;
+  width: 78px; height: 118px;
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease, transform .25s var(--ease-wii);
+}
+.page-arrow.show { opacity: 1; }
+.page-arrow.left { left: 40px; }
+.page-arrow.right { right: 40px; }
+.page-arrow svg { width: 50px; height: 80px; overflow: visible; }
+.page-arrow path {
+  fill: none; stroke: var(--wii-blue); stroke-width: 14; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(52,190,237,.6));
+}
+.page-arrow.show { animation: arrowNudge 1.8s ease-in-out infinite; }
+.page-arrow.left.show { animation-name: arrowNudgeL; }
+@keyframes arrowNudge  { 0%,100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+@keyframes arrowNudgeL { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-8px); } }
+
+/* =========================================================
+   Clock + bottom bar
+   ========================================================= */
+.clock {
+  position: absolute; left: 0; right: 0; top: 806px;
+  text-align: center;
+  color: #9aa0a6;
+  font-weight: 300;
+  letter-spacing: 4px;
+  z-index: 4;
+  text-shadow: 0 2px 0 #fff;
+}
+.clock-time { font-size: 104px; font-variant-numeric: tabular-nums; }
+.clock-time .colon { animation: colon 1s steps(1) infinite; }
+@keyframes colon { 50% { opacity: .15; } }
+.clock-ampm { font-size: 40px; margin-left: 12px; font-weight: 500; }
+
+.bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 300px;
+  z-index: 3;
+}
+.bar-shape { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.bar-body { filter: drop-shadow(0 -3px 6px rgba(0,0,0,.06)); }
+.bar-line { fill: none; stroke: var(--wii-blue); stroke-width: 5; }
+
+.date {
+  position: absolute; left: 0; right: 0; bottom: 64px;
+  text-align: center;
+  font-size: 46px; font-weight: 700; color: var(--grey-700);
+  letter-spacing: 1px;
+}
+
+/* Round Wii / Mail buttons */
+.round-btn {
+  position: absolute; bottom: 52px;
+  width: 196px; height: 196px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff, #e4e7ea);
+  box-shadow: 0 0 0 6px #d5d9dd, 0 8px 18px rgba(0,0,0,.12), inset 0 -6px 12px rgba(0,0,0,.05);
+  transition: transform .25s var(--ease-wii), box-shadow .25s ease;
+}
+.wii-btn { left: 92px; }
+.mail-btn { right: 92px; }
+.round-btn-face {
+  position: absolute; left: 16px; top: 16px; right: 16px; bottom: 16px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 35%, #ffffff, #eef0f2 70%);
+  box-shadow: inset 0 0 0 3px #e0e3e6;
+}
+.wii-word {
+  font-size: 66px; font-weight: 800; color: #9aa0a6; letter-spacing: -1px;
+  font-style: italic;
+}
+.mail-icon { width: 92px; height: 70px; }
+.mail-icon rect, .mail-icon path { fill: none; stroke: #9aa0a6; stroke-width: 5; stroke-linejoin: round; }
+.mail-dot {
+  position: absolute; top: 18px; right: 22px; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--wii-blue); box-shadow: 0 0 0 5px #fff, 0 0 18px var(--wii-blue);
+  animation: mailBlink 1.8s ease-in-out infinite;
+}
+.mail-dot.off { display: none; }
+@keyframes mailBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+.round-btn.focused {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 6px var(--wii-blue), 0 0 34px 10px var(--wii-blue-glow), 0 8px 18px rgba(0,0,0,.12);
+}
+.round-btn.focused .wii-word,
+.round-btn.focused .mail-icon rect,
+.round-btn.focused .mail-icon path { color: var(--wii-blue); stroke: var(--wii-blue); }
+
+/* =========================================================
+   Channel preview (zoomed-in "Start" screen)
+   ========================================================= */
+.preview {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 20;
+  background: #000;
+  animation: previewIn .55s var(--ease-out) both;
+}
+.preview.out { animation: previewOut .35s ease both; }
+@keyframes previewIn  { from { opacity: 0; transform: scale(.35); border-radius: 60px; } to { opacity: 1; transform: none; border-radius: 0; } }
+@keyframes previewOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.4); } }
+
+.preview-banner {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 230px;
+  overflow: hidden;
+}
+.preview-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 230px;
+  background: linear-gradient(180deg, #f6f7f8, #dfe2e5);
+  border-top: 5px solid var(--wii-blue);
+  display: flex; align-items: center; justify-content: center;
+}
+.pill-btn {
+  min-width: 420px; height: 112px; margin: 0 50px; padding: 0 40px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, #eceef0);
+  box-shadow: 0 0 0 5px #c9ced2, 0 8px 16px rgba(0,0,0,.1);
+  font-size: 46px; font-weight: 800; color: var(--grey-900);
+  transition: transform .25s var(--ease-wii), box-shadow .25s ease, color .2s;
+}
+.pill-btn.focused {
+  transform: scale(1.07);
+  color: var(--wii-blue-deep);
+  box-shadow: 0 0 0 6px var(--wii-blue), 0 0 34px 8px var(--wii-blue-glow), 0 8px 16px rgba(0,0,0,.1);
+}
+
+/* =========================================================
+   Panels (options / message board)
+   ========================================================= */
+.panel {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(230, 233, 236, .72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeIn .3s ease both;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.panel-card {
+  width: 1000px;
+  padding: 56px 70px 60px;
+  border-radius: 48px;
+  background: linear-gradient(180deg, #ffffff, #f0f2f4);
+  box-shadow: 0 0 0 6px #d3d7db, 0 30px 80px rgba(0,0,0,.18);
+  text-align: center;
+  animation: popIn .45s var(--ease-wii) both;
+}
+@keyframes popIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+.panel-title {
+  margin: 0 0 36px; font-size: 52px; font-weight: 800; color: var(--grey-900);
+}
+.opt-list { margin-bottom: 40px; }
+.opt {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; height: 96px; margin-bottom: 18px; padding: 0 44px;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 0 0 4px #dde1e4;
+  font-size: 38px; font-weight: 700; color: var(--grey-900);
+  transition: transform .2s var(--ease-wii), box-shadow .2s;
+}
+.opt.focused { transform: scale(1.03); box-shadow: 0 0 0 5px var(--wii-blue), 0 0 26px 6px var(--wii-blue-glow); }
+.opt-val { color: var(--wii-blue-deep); font-weight: 800; }
+.panel-close { min-width: 320px; height: 96px; font-size: 40px; }
+
+.board-card { width: 1300px; background: linear-gradient(180deg, #fffdf6, #f6f1e1); }
+.board-notes { text-align: left; margin-bottom: 40px; max-height: 560px; overflow: hidden; }
+.note {
+  display: flex; align-items: flex-start;
+  padding: 26px 34px; margin-bottom: 20px;
+  border-radius: 26px; background: #fff;
+  box-shadow: 0 0 0 3px #e9e2c9;
+  font-size: 32px; line-height: 1.45; color: var(--grey-900); font-weight: 600;
+}
+.note-icon {
+  flex: 0 0 64px; height: 64px; margin-right: 28px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--wii-blue); color: #fff; font-size: 36px; font-weight: 800;
+}
+.note b { color: var(--wii-blue-deep); }
+
+/* =========================================================
+   Toast + HDMI hint
+   ========================================================= */
+.toast {
+  position: absolute; left: 50%; top: 40px;
+  transform: translate(-50%, -160px);
+  padding: 22px 48px; border-radius: 999px;
+  background: #fff; color: var(--grey-900);
+  font-size: 34px; font-weight: 700;
+  box-shadow: 0 0 0 4px var(--wii-blue), 0 14px 36px rgba(0,0,0,.18);
+  z-index: 60;
+  transition: transform .45s var(--ease-wii);
+}
+.toast.show { transform: translate(-50%, 0); }
+
+.hdmi-hint {
+  position: absolute; left: 50%; bottom: 60px;
+  transform: translateX(-50%);
+  padding: 20px 46px; border-radius: 999px;
+  background: rgba(255,255,255,.92); color: var(--grey-900);
+  font-size: 32px; font-weight: 700; z-index: 40;
+  box-shadow: 0 0 0 4px var(--wii-blue);
+  animation: hintFade 5s ease forwards;
+}
+@keyframes hintFade { 0%, 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* =========================================================
+   Wii hand cursor
+   ========================================================= */
+.cursor {
+  position: absolute; left: 0; top: 0;
+  width: 80px; height: 100px;
+  z-index: 45;
+  pointer-events: none;
+  transition: transform .42s var(--ease-out), opacity .3s;
+  filter: drop-shadow(0 6px 6px rgba(0,0,0,.25));
+}
+.cursor.hide { opacity: 0; }
+.cursor svg { width: 100%; height: 100%; animation: handBob 2.2s ease-in-out infinite; transform-origin: 30% 10%; }
+.cursor .hand { fill: #fff; stroke: var(--wii-blue); stroke-width: 4; stroke-linejoin: round; }
+.cursor .hand-num { fill: var(--wii-blue); font-size: 22px; font-weight: 800; font-family: 'WiiRound', sans-serif; }
+@keyframes handBob { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(3deg) translateY(-3px); } }
+
+/* =========================================================
+   Channel banners (shared)
+   ========================================================= */
+.banner {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.banner .wm { position: relative; z-index: 2; white-space: nowrap; }
+
+/* Scale for preview: banners are authored at tile size, preview scales them up */
+.preview-banner .banner { transform-origin: 50% 50%; }
+.preview-banner .banner-inner {
+  position: absolute; left: 50%; top: 50%;
+  width: 384px; height: 196px;
+  margin-left: -192px; margin-top: -98px;
+  transform: scale(4.4);
+}
+.channel .banner-inner { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+/* Netflix */
+.b-netflix { background: radial-gradient(ellipse at 50% 120%, #3a0306 0%, #0b0b0b 65%); }
+.b-netflix .wm {
+  font-size: 66px; font-weight: 900; letter-spacing: -1px; color: #e50914;
+  transform: scaleY(1.25);
+  text-shadow: 0 0 18px rgba(229,9,20,.55);
+}
+.b-netflix .ribbon {
+  position: absolute; top: -10%; bottom: -10%; width: 26px; background: linear-gradient(180deg,#b1060f,#e50914);
+  opacity: .25; animation: nfRibbon 5s ease-in-out infinite;
+}
+.b-netflix .ribbon.r2 { animation-delay: -1.6s; opacity: .18; width: 16px; }
+.b-netflix .ribbon.r3 { animation-delay: -3.2s; opacity: .12; width: 40px; }
+@keyframes nfRibbon { 0% { left: -10%; } 100% { left: 110%; } }
+
+/* YouTube */
+.b-youtube { background: linear-gradient(180deg, #ffffff, #f2f2f2); }
+.b-youtube .yt { display: flex; align-items: center; position: relative; z-index: 2; }
+.b-youtube .yt-play {
+  width: 78px; height: 56px; border-radius: 16px; background: #ff0033; position: relative; margin-right: 10px;
+  animation: ytPulse 2s ease-in-out infinite;
+}
+.b-youtube .yt-play::after {
+  content: ''; position: absolute; left: 31px; top: 16px;
+  border-left: 22px solid #fff; border-top: 12px solid transparent; border-bottom: 12px solid transparent;
+}
+.b-youtube .wm { font-size: 50px; font-weight: 800; color: #0f0f0f; letter-spacing: -2px; }
+@keyframes ytPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+/* Prime Video */
+.b-prime { background: linear-gradient(160deg, #0f171e 0%, #1b2a38 100%); flex-direction: column; }
+.b-prime .wm { font-size: 46px; font-weight: 800; color: #fff; letter-spacing: -1px; line-height: 1; }
+.b-prime .smile {
+  width: 150px; height: 40px; margin-top: 2px; position: relative; z-index: 2;
+  border-bottom: 7px solid #1a98ff; border-radius: 0 0 50% 50%;
+  animation: smile 3s ease-in-out infinite;
+}
+.b-prime .smile::after {
+  content: ''; position: absolute; right: -6px; bottom: -12px;
+  border-left: 16px solid #1a98ff; border-top: 9px solid transparent; border-bottom: 9px solid transparent;
+  transform: rotate(-28deg);
+}
+@keyframes smile { 0%,100% { transform: scaleX(.85); } 50% { transform: scaleX(1); } }
+
+/* Disney+ */
+.b-disney { background: radial-gradient(ellipse at 50% 100%, #2b4bc0 0%, #0c1a5a 55%, #050b2e 100%); }
+.b-disney .wm {
+  font-size: 58px; font-weight: 800; color: #fff; font-style: italic; letter-spacing: -1px;
+  text-shadow: 0 0 20px rgba(160,200,255,.6);
+}
+.b-disney .arc {
+  position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px;
+  border-radius: 50%;
+  border-top: 4px solid rgba(255,255,255,.95);
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 4px solid transparent;
+  filter: drop-shadow(0 0 10px #8fd3ff);
+  animation: dArc 4s linear infinite;
+  z-index: 1;
+}
+@keyframes dArc { 0% { transform: rotate(-70deg); opacity: 0; } 15% { opacity: 1; } 60% { transform: rotate(40deg); opacity: 1; } 75%,100% { transform: rotate(40deg); opacity: 0; } }
+
+/* Hulu */
+.b-hulu { background: linear-gradient(160deg, #0b0c0f, #151a1d); }
+.b-hulu .wm { font-size: 92px; font-weight: 900; color: #1ce783; letter-spacing: -4px; text-shadow: 0 0 22px rgba(28,231,131,.35); }
+.b-hulu .glow {
+  position: absolute; width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(28,231,131,.28), rgba(28,231,131,0) 65%);
+  animation: huluGlow 3.5s ease-in-out infinite;
+}
+@keyframes huluGlow { 0%,100% { transform: scale(.8); opacity: .6; } 50% { transform: scale(1.2); opacity: 1; } }
+
+/* Peacock */
+.b-peacock { background: #050505; flex-direction: column; }
+.b-peacock .wm { font-size: 54px; font-weight: 900; color: #fff; letter-spacing: -2px; line-height: 1; }
+.b-peacock .dots { display: flex; margin-top: 12px; position: relative; z-index: 2; }
+.b-peacock .dots i {
+  display: block; width: 18px; height: 18px; border-radius: 50%; margin: 0 6px;
+  animation: dotHop 1.8s ease-in-out infinite;
+}
+.b-peacock .dots i:nth-child(1) { background: #fccc12; animation-delay: 0s; }
+.b-peacock .dots i:nth-child(2) { background: #f37021; animation-delay: .12s; }
+.b-peacock .dots i:nth-child(3) { background: #cc004c; animation-delay: .24s; }
+.b-peacock .dots i:nth-child(4) { background: #6460aa; animation-delay: .36s; }
+.b-peacock .dots i:nth-child(5) { background: #0089d0; animation-delay: .48s; }
+.b-peacock .dots i:nth-child(6) { background: #0db14b; animation-delay: .60s; }
+@keyframes dotHop { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+
+/* Paramount+ */
+.b-paramount { background: linear-gradient(180deg, #0064ff 0%, #0040b8 100%); flex-direction: column; }
+.b-paramount .mountain {
+  width: 0; height: 0; position: relative; z-index: 2; margin-bottom: 6px;
+  border-left: 46px solid transparent; border-right: 46px solid transparent; border-bottom: 46px solid rgba(255,255,255,.95);
+}
+.b-paramount .stars {
+  position: absolute; left: 50%; top: 50%; width: 170px; height: 170px; margin: -118px 0 0 -85px;
+  z-index: 1; animation: starSpin 12s linear infinite;
+}
+.b-paramount .stars i {
+  position: absolute; left: 50%; top: 0; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 8px #fff; transform-origin: 4px 85px;
+}
+@keyframes starSpin { to { transform: rotate(360deg); } }
+.b-paramount .wm { font-size: 40px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+
+/* HDMI input */
+.b-hdmi { background: linear-gradient(180deg, #fbfcfd, #e6e9ec); flex-direction: column; }
+.b-hdmi .port {
+  width: 120px; height: 46px; position: relative; z-index: 2;
+  background: #5b6168; clip-path: polygon(0 0, 100% 0, 100% 55%, 86% 100%, 14% 100%, 0 55%);
+}
+.b-hdmi .port::after {
+  content: ''; position: absolute; left: 12px; right: 12px; top: 10px; height: 14px; background: #2b2f33; border-radius: 3px;
+}
+.b-hdmi .wm { font-size: 40px; font-weight: 800; color: var(--grey-900); margin-top: 14px; }
+.b-hdmi .sub { font-size: 22px; font-weight: 700; color: var(--grey-700); position: relative; z-index: 2; }
+.b-hdmi .signal { position: absolute; right: 18px; top: 16px; width: 16px; height: 16px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 10px #2ecc71; animation: blink 1.4s infinite; z-index: 2; }
+.b-hdmi .signal.off { background: #c0c5ca; box-shadow: none; animation: none; }
+.b-hdmi .scan {
+  position: absolute; left: 0; right: 0; height: 40%;
+  background: linear-gradient(180deg, rgba(52,190,237,0), rgba(52,190,237,.12), rgba(52,190,237,0));
+  animation: scan 3s linear infinite;
+}
+@keyframes scan { from { top: -40%; } to { top: 100%; } }
+
+/* Settings */
+.b-settings { background: linear-gradient(180deg, #f9fafb, #e3e6e9); flex-direction: column; }
+.b-settings .gear { width: 96px; height: 96px; position: relative; z-index: 2; animation: gear 8s linear infinite; }
+.b-settings .gear path { fill: #8d939a; }
+.b-settings .wm { font-size: 34px; font-weight: 800; color: var(--grey-900); margin-top: 8px; }
+@keyframes gear { to { transform: rotate(360deg); } }

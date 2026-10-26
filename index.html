@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1">
+  <title>Wii Menu · Samsung TV Launcher</title>
+  <meta name="description" content="A Wii-style channel menu launcher for Samsung Tizen TVs: Netflix, YouTube, Prime Video, Disney+, Hulu, Peacock, Paramount+, HDMI inputs and TV settings.">
+  <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Fixed 1920x1080 stage. Scaled to fit in the browser preview; native on the TV. -->
+  <main id="stage" class="stage" aria-label="Wii Menu">
+    <h1 class="sr-only">Wii Menu</h1>
+
+    <!-- ===== Health & Safety style boot screen ===== -->
+    <section id="boot" class="boot" aria-label="Start screen">
+      <div class="boot-inner">
+        <div class="boot-title"><span class="boot-warn">!</span> HELLO, <span id="bootName">FRIEND</span>!</div>
+        <p class="boot-text">Your channels are ready. Grab the remote, settle in,<br>and remember to take a break every so often.</p>
+        <p class="boot-press">Press <span class="key-pill">OK</span> to continue.</p>
+      </div>
+    </section>
+
+    <!-- ===== Main channel menu ===== -->
+    <section id="menu" class="menu" aria-label="Channels">
+      <div id="pages" class="pages">
+        <!-- channel grid pages injected here -->
+      </div>
+
+      <button id="arrowLeft" class="page-arrow left" tabindex="-1" aria-label="Previous page">
+        <svg viewBox="0 0 60 90"><path d="M44 8 L12 45 L44 82" /></svg>
+      </button>
+      <button id="arrowRight" class="page-arrow right" tabindex="-1" aria-label="Next page">
+        <svg viewBox="0 0 60 90"><path d="M16 8 L48 45 L16 82" /></svg>
+      </button>
+
+      <!-- Big grey clock floating above the bar -->
+      <div class="clock" aria-live="off">
+        <span id="clockTime" class="clock-time">12:00</span><span id="clockAmPm" class="clock-ampm">PM</span>
+      </div>
+
+      <!-- Bottom bar with the iconic curved edge -->
+      <footer class="bar">
+        <svg class="bar-shape" viewBox="0 0 1920 300" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f4f5f6"/>
+              <stop offset="1" stop-color="#d9dcdf"/>
+            </linearGradient>
+          </defs>
+          <path class="bar-body" d="M0 30 C 120 30, 210 30, 300 78 C 360 110, 420 118, 520 118 L 1400 118 C 1500 118, 1560 110, 1620 78 C 1710 30, 1800 30, 1920 30 L 1920 300 L 0 300 Z" fill="url(#barFill)"/>
+          <path class="bar-line" d="M0 30 C 120 30, 210 30, 300 78 C 360 110, 420 118, 520 118 L 1400 118 C 1500 118, 1560 110, 1620 78 C 1710 30, 1800 30, 1920 30" />
+        </svg>
+
+        <button id="btnWii" class="round-btn wii-btn nav-item" data-action="options" aria-label="Launcher options">
+          <span class="round-btn-face"><span class="wii-word">Wii</span></span>
+        </button>
+
+        <div id="clockDate" class="date">Mon 10/26</div>
+
+        <button id="btnMail" class="round-btn mail-btn nav-item" data-action="board" aria-label="Message board">
+          <span class="round-btn-face">
+            <svg viewBox="0 0 64 48" class="mail-icon"><rect x="4" y="6" width="56" height="36" rx="5"/><path d="M6 9 L32 28 L58 9"/></svg>
+          </span>
+          <span id="mailDot" class="mail-dot"></span>
+        </button>
+      </footer>
+    </section>
+
+    <!-- ===== Channel preview (the zoom-in "Start" screen) ===== -->
+    <section id="preview" class="preview" aria-label="Channel preview" hidden>
+      <div id="previewBanner" class="preview-banner"></div>
+      <div class="preview-bar">
+        <button id="btnBack" class="pill-btn nav-item" data-action="back">Wii Menu</button>
+        <button id="btnStart" class="pill-btn nav-item" data-action="start">Start</button>
+      </div>
+    </section>
+
+    <!-- ===== Options panel (Wii button) ===== -->
+    <section id="options" class="panel" aria-label="Launcher options" hidden>
+      <div class="panel-card">
+        <h2 class="panel-title">Wii Menu Options</h2>
+        <div class="opt-list">
+          <button class="opt nav-item" data-opt="sound">Sounds <span class="opt-val" data-val="sound">On</span></button>
+          <button class="opt nav-item" data-opt="clock24">Clock <span class="opt-val" data-val="clock24">12-hour</span></button>
+          <button class="opt nav-item" data-opt="boot">Start screen <span class="opt-val" data-val="boot">On</span></button>
+          <button class="opt nav-item" data-opt="cursor">Hand cursor <span class="opt-val" data-val="cursor">On</span></button>
+          <button class="opt nav-item" data-opt="rescan">Rescan apps &amp; inputs <span class="opt-val">↻</span></button>
+        </div>
+        <button class="pill-btn nav-item panel-close" data-action="close">Back</button>
+      </div>
+    </section>
+
+    <!-- ===== Message board (mail button) ===== -->
+    <section id="board" class="panel board" aria-label="Message board" hidden>
+      <div class="panel-card board-card">
+        <h2 class="panel-title"><span id="boardDate">Monday, October 26</span></h2>
+        <div id="boardNotes" class="board-notes"></div>
+        <button class="pill-btn nav-item panel-close" data-action="close">Back</button>
+      </div>
+    </section>
+
+    <!-- ===== HDMI overlay hint ===== -->
+    <div id="hdmiHint" class="hdmi-hint" hidden>Press <span class="key-pill">BACK</span> to return to the Wii Menu</div>
+
+    <!-- ===== Toast ===== -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- ===== Wii hand cursor ===== -->
+    <div id="cursor" class="cursor" aria-hidden="true">
+      <svg viewBox="0 0 80 100">
+        <path class="hand" d="M30 8 c0-5 9-5 9 0 v34 c0-5 9-5 9 0 v4 c0-5 9-5 9 0 v4 c0-5 9-5 9 0 v22 c0 14-9 22-22 22 h-6 c-9 0-15-4-19-11 l-12-20 c-3-5 4-10 8-5 l6 7 V8 z"/>
+        <text x="47" y="80" class="hand-num">1</text>
+      </svg>
+    </div>
+  </main>
+
+  <script src="js/channels.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/tv.js"></script>
+  <script src="js/banners.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

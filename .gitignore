@@ -1,0 +1,4 @@
+*.wgt
+*.p12
+.DS_Store
+scripts/
